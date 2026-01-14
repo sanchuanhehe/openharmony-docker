@@ -1,0 +1,46 @@
+version: '3.8'
+
+# OpenHarmony rootfs containers for different architectures
+# Note: Non-native architectures require QEMU user-mode emulation
+
+services:
+  # x86_64 OpenHarmony (runs natively on x86_64 hosts)
+  ohos-x86_64:
+    image: openharmony-x86_64:latest
+    container_name: ohos-x86_64
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: ohos-x86_64
+      args:
+        NDK_URL: "https://cidownload.openharmony.cn/version/Daily_Version/LLVM-19/20260114_061434/version-Daily_Version-LLVM-19-20260114_061434-LLVM-19.tar.gz"
+    stdin_open: true
+    tty: true
+
+  # aarch64 OpenHarmony (requires QEMU on x86_64 hosts)
+  ohos-aarch64:
+    image: openharmony-aarch64:latest
+    container_name: ohos-aarch64
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: ohos-aarch64
+      args:
+        NDK_URL: "https://cidownload.openharmony.cn/version/Daily_Version/LLVM-19/20260114_061434/version-Daily_Version-LLVM-19-20260114_061434-LLVM-19.tar.gz"
+    platform: linux/arm64
+    stdin_open: true
+    tty: true
+
+  # ARM 32-bit OpenHarmony (requires QEMU on x86_64 hosts)
+  ohos-arm:
+    image: openharmony-arm:latest
+    container_name: ohos-arm
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: ohos-arm
+      args:
+        NDK_URL: "https://cidownload.openharmony.cn/version/Daily_Version/LLVM-19/20260114_061434/version-Daily_Version-LLVM-19-20260114_061434-LLVM-19.tar.gz"
+    platform: linux/arm/v7
+    stdin_open: true
+    tty: true
