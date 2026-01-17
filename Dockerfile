@@ -96,11 +96,12 @@ RUN cd busybox-src && \
 # Stage 3: OpenHarmony x86_64 rootfs
 # ============================================================================
 FROM ubuntu:22.04 AS x86_64-builder
-COPY --from=ndk-extractor /extract/sysroot/x86_64-linux-ohos/usr/lib/ /rootfs/lib/
+COPY --from=ndk-extractor /extract/sysroot/x86_64-linux-ohos/usr/lib/ /rootfs/usr/lib/
 COPY --from=ndk-extractor /extract/sysroot/x86_64-linux-ohos/usr/include/ /rootfs/usr/include/
 COPY --from=busybox-x86_64 /out/busybox /rootfs/bin/busybox
 RUN mkdir -p /rootfs/bin /rootfs/sbin /rootfs/usr/bin /rootfs/usr/sbin \
              /rootfs/tmp /rootfs/var /rootfs/etc /rootfs/proc /rootfs/sys /rootfs/dev && \
+    ln -sf usr/lib /rootfs/lib && \
     chmod +x /rootfs/bin/busybox && \
     cd /rootfs/bin && \
     for cmd in sh ash cat ls cp mv rm mkdir rmdir echo pwd sleep test expr head tail grep sed awk sort uniq wc cut tr date env printenv; do \
@@ -130,11 +131,12 @@ CMD ["/bin/sh"]
 # Stage 4: OpenHarmony aarch64 rootfs
 # ============================================================================
 FROM ubuntu:22.04 AS aarch64-builder
-COPY --from=ndk-extractor /extract/sysroot/aarch64-linux-ohos/usr/lib/ /rootfs/lib/
+COPY --from=ndk-extractor /extract/sysroot/aarch64-linux-ohos/usr/lib/ /rootfs/usr/lib/
 COPY --from=ndk-extractor /extract/sysroot/aarch64-linux-ohos/usr/include/ /rootfs/usr/include/
 COPY --from=busybox-aarch64 /out/busybox /rootfs/bin/busybox
 RUN mkdir -p /rootfs/bin /rootfs/sbin /rootfs/usr/bin /rootfs/usr/sbin \
              /rootfs/tmp /rootfs/var /rootfs/etc /rootfs/proc /rootfs/sys /rootfs/dev && \
+    ln -sf usr/lib /rootfs/lib && \
     chmod +x /rootfs/bin/busybox && \
     cd /rootfs/bin && \
     for cmd in sh ash cat ls cp mv rm mkdir rmdir echo pwd sleep test expr head tail grep sed awk sort uniq wc cut tr date env printenv; do \
@@ -164,11 +166,12 @@ CMD ["/bin/sh"]
 # Stage 5: OpenHarmony ARM (32-bit) rootfs
 # ============================================================================
 FROM ubuntu:22.04 AS arm-builder
-COPY --from=ndk-extractor /extract/sysroot/arm-linux-ohos/usr/lib/ /rootfs/lib/
+COPY --from=ndk-extractor /extract/sysroot/arm-linux-ohos/usr/lib/ /rootfs/usr/lib/
 COPY --from=ndk-extractor /extract/sysroot/arm-linux-ohos/usr/include/ /rootfs/usr/include/
 COPY --from=busybox-arm /out/busybox /rootfs/bin/busybox
 RUN mkdir -p /rootfs/bin /rootfs/sbin /rootfs/usr/bin /rootfs/usr/sbin \
              /rootfs/tmp /rootfs/var /rootfs/etc /rootfs/proc /rootfs/sys /rootfs/dev && \
+    ln -sf usr/lib /rootfs/lib && \
     chmod +x /rootfs/bin/busybox && \
     cd /rootfs/bin && \
     for cmd in sh ash cat ls cp mv rm mkdir rmdir echo pwd sleep test expr head tail grep sed awk sort uniq wc cut tr date env printenv; do \
