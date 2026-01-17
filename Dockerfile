@@ -98,18 +98,18 @@ RUN cd busybox-src && \
 FROM ubuntu:22.04 AS x86_64-builder
 COPY --from=ndk-extractor /extract/sysroot/x86_64-linux-ohos/usr/lib/ /rootfs/usr/lib/
 COPY --from=ndk-extractor /extract/sysroot/x86_64-linux-ohos/usr/include/ /rootfs/usr/include/
-COPY --from=busybox-x86_64 /out/busybox /rootfs/bin/busybox
-RUN mkdir -p /rootfs/bin /rootfs/sbin /rootfs/usr/bin /rootfs/usr/sbin \
+COPY --from=busybox-x86_64 /out/busybox /rootfs/usr/bin/busybox
+# Use usr-merge layout: /bin, /sbin, /lib, /lib64 are symlinks to /usr/*
+RUN mkdir -p /rootfs/usr/bin /rootfs/usr/sbin /rootfs/usr/lib \
              /rootfs/tmp /rootfs/var /rootfs/etc /rootfs/proc /rootfs/sys /rootfs/dev && \
+    ln -sf usr/bin /rootfs/bin && \
+    ln -sf usr/sbin /rootfs/sbin && \
     ln -sf usr/lib /rootfs/lib && \
-    chmod +x /rootfs/bin/busybox && \
-    cd /rootfs/bin && \
-    for cmd in sh ash cat ls cp mv rm mkdir rmdir echo pwd sleep test expr head tail grep sed awk sort uniq wc cut tr date env printenv; do \
-        ln -sf busybox $cmd; \
-    done && \
+    ln -sf usr/lib /rootfs/lib64 && \
+    chmod +x /rootfs/usr/bin/busybox && \
     cd /rootfs/usr/bin && \
-    for cmd in id whoami basename dirname find xargs du df free top; do \
-        ln -sf ../../bin/busybox $cmd; \
+    for cmd in sh ash cat ls cp mv rm mkdir rmdir echo pwd sleep test expr head tail grep sed awk sort uniq wc cut tr date env printenv id whoami basename dirname find xargs du df free top; do \
+        ln -sf busybox $cmd; \
     done && \
     echo "root:x:0:0:root:/:/bin/sh" > /rootfs/etc/passwd && \
     echo "root:x:0:" > /rootfs/etc/group
@@ -133,18 +133,17 @@ CMD ["/bin/sh"]
 FROM ubuntu:22.04 AS aarch64-builder
 COPY --from=ndk-extractor /extract/sysroot/aarch64-linux-ohos/usr/lib/ /rootfs/usr/lib/
 COPY --from=ndk-extractor /extract/sysroot/aarch64-linux-ohos/usr/include/ /rootfs/usr/include/
-COPY --from=busybox-aarch64 /out/busybox /rootfs/bin/busybox
-RUN mkdir -p /rootfs/bin /rootfs/sbin /rootfs/usr/bin /rootfs/usr/sbin \
+COPY --from=busybox-aarch64 /out/busybox /rootfs/usr/bin/busybox
+# Use usr-merge layout: /bin, /sbin, /lib are symlinks to /usr/*
+RUN mkdir -p /rootfs/usr/bin /rootfs/usr/sbin /rootfs/usr/lib \
              /rootfs/tmp /rootfs/var /rootfs/etc /rootfs/proc /rootfs/sys /rootfs/dev && \
+    ln -sf usr/bin /rootfs/bin && \
+    ln -sf usr/sbin /rootfs/sbin && \
     ln -sf usr/lib /rootfs/lib && \
-    chmod +x /rootfs/bin/busybox && \
-    cd /rootfs/bin && \
-    for cmd in sh ash cat ls cp mv rm mkdir rmdir echo pwd sleep test expr head tail grep sed awk sort uniq wc cut tr date env printenv; do \
-        ln -sf busybox $cmd; \
-    done && \
+    chmod +x /rootfs/usr/bin/busybox && \
     cd /rootfs/usr/bin && \
-    for cmd in id whoami basename dirname find xargs du df free top; do \
-        ln -sf ../../bin/busybox $cmd; \
+    for cmd in sh ash cat ls cp mv rm mkdir rmdir echo pwd sleep test expr head tail grep sed awk sort uniq wc cut tr date env printenv id whoami basename dirname find xargs du df free top; do \
+        ln -sf busybox $cmd; \
     done && \
     echo "root:x:0:0:root:/:/bin/sh" > /rootfs/etc/passwd && \
     echo "root:x:0:" > /rootfs/etc/group
@@ -168,18 +167,17 @@ CMD ["/bin/sh"]
 FROM ubuntu:22.04 AS arm-builder
 COPY --from=ndk-extractor /extract/sysroot/arm-linux-ohos/usr/lib/ /rootfs/usr/lib/
 COPY --from=ndk-extractor /extract/sysroot/arm-linux-ohos/usr/include/ /rootfs/usr/include/
-COPY --from=busybox-arm /out/busybox /rootfs/bin/busybox
-RUN mkdir -p /rootfs/bin /rootfs/sbin /rootfs/usr/bin /rootfs/usr/sbin \
+COPY --from=busybox-arm /out/busybox /rootfs/usr/bin/busybox
+# Use usr-merge layout: /bin, /sbin, /lib are symlinks to /usr/*
+RUN mkdir -p /rootfs/usr/bin /rootfs/usr/sbin /rootfs/usr/lib \
              /rootfs/tmp /rootfs/var /rootfs/etc /rootfs/proc /rootfs/sys /rootfs/dev && \
+    ln -sf usr/bin /rootfs/bin && \
+    ln -sf usr/sbin /rootfs/sbin && \
     ln -sf usr/lib /rootfs/lib && \
-    chmod +x /rootfs/bin/busybox && \
-    cd /rootfs/bin && \
-    for cmd in sh ash cat ls cp mv rm mkdir rmdir echo pwd sleep test expr head tail grep sed awk sort uniq wc cut tr date env printenv; do \
-        ln -sf busybox $cmd; \
-    done && \
+    chmod +x /rootfs/usr/bin/busybox && \
     cd /rootfs/usr/bin && \
-    for cmd in id whoami basename dirname find xargs du df free top; do \
-        ln -sf ../../bin/busybox $cmd; \
+    for cmd in sh ash cat ls cp mv rm mkdir rmdir echo pwd sleep test expr head tail grep sed awk sort uniq wc cut tr date env printenv id whoami basename dirname find xargs du df free top; do \
+        ln -sf busybox $cmd; \
     done && \
     echo "root:x:0:0:root:/:/bin/sh" > /rootfs/etc/passwd && \
     echo "root:x:0:" > /rootfs/etc/group
