@@ -141,9 +141,55 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
 
+  # Create multi-arch manifest for unified image name
+  manifest:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' && (github.event_name == 'push' || github.event.inputs.push_images == 'true')
+    
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and push multi-arch manifest (latest)
+        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        run: |
+          docker manifest create ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}:latest \
+            --amend ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-x86_64:latest \
+            --amend ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-aarch64:latest \
+            --amend ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-arm:latest
+          docker manifest push ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}:latest
+
+      - name: Create and push multi-arch manifest (sha)
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          docker manifest create ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}:${SHORT_SHA} \
+            --amend ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-x86_64:${SHORT_SHA} \
+            --amend ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-aarch64:${SHORT_SHA} \
+            --amend ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-arm:${SHORT_SHA}
+          docker manifest push ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}:${SHORT_SHA}
+
+      - name: Create and push multi-arch manifest (tag)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          docker manifest create ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}:${TAG} \
+            --amend ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-x86_64:${TAG} \
+            --amend ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-aarch64:${TAG} \
+            --amend ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-arm:${TAG}
+          docker manifest push ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}:${TAG}
+
   # Summary job that runs after all builds complete
   summary:
-    needs: build
+    needs: [build, manifest]
     runs-on: ubuntu-latest
     if: always()
     
@@ -153,15 +199,13 @@ jobs:
           echo "=== Build Summary ==="
           echo "All architecture builds completed."
           echo ""
-          echo "Images published to:"
-          echo "  - ghcr.io/${{ github.repository_owner }}/openharmony-x86_64"
-          echo "  - ghcr.io/${{ github.repository_owner }}/openharmony-aarch64"
-          echo "  - ghcr.io/${{ github.repository_owner }}/openharmony-arm"
+          echo "Multi-arch image (auto-selects architecture):"
+          echo "  docker pull ghcr.io/${{ github.repository_owner }}/openharmony:latest"
           echo ""
-          echo "To pull images:"
-          echo "  docker pull ghcr.io/${{ github.repository_owner }}/openharmony-x86_64:latest"
-          echo "  docker pull ghcr.io/${{ github.repository_owner }}/openharmony-aarch64:latest"
-          echo "  docker pull ghcr.io/${{ github.repository_owner }}/openharmony-arm:latest"
+          echo "Architecture-specific images:"
+          echo "  - ghcr.io/${{ github.repository_owner }}/openharmony-x86_64:latest"
+          echo "  - ghcr.io/${{ github.repository_owner }}/openharmony-aarch64:latest"
+          echo "  - ghcr.io/${{ github.repository_owner }}/openharmony-arm:latest"
 
       - name: Summary status
         if: needs.build.result == 'failure'
